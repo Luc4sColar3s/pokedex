@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import background from "./assets/background.png";
 import boll from "./assets/boll.svg";
 import bollBlack from "./assets/bollBlack.svg";
-import { toast } from "react-toastify";
+import Loading from "./components/Loading";
 
 export default function App() {
   const [ligar, setLigar] = useState(0);
   const [pokeId, setPokeId] = useState(0);
   const [pokeDados, setPokeDados] = useState(null);
-  const spinner = () => toast("yes");
+  const [loading, setLoading] = useState(false);
 
   function handleLigarDesliga() {
     ligar === 0 ? setLigar(1) : setLigar(0);
@@ -16,22 +16,31 @@ export default function App() {
 
   function handlePokeId(event) {
     const { name } = event.target;
-    setPokeId((prev) => {
-      const novoId = name === "right" ? prev + 1 : prev - 1;
-      return novoId <= 0 ? 1 : novoId;
-    });
+    if (name === "right") {
+      setPokeId((prev) => prev + 1);
+    }
+    if (name === "left") {
+      setPokeId((prev) => prev - 1);
+    }
   }
 
   useEffect(() => {
     async function handleDataPokemon() {
-      const response = await fetch(
-        `https://pokeapi.co/api/v2/pokemon/${pokeId}`
-      );
-      const data = await response.json();
-      setPokeDados(data);
+      setLoading(true);
+
+      try {
+        const response = await fetch(
+          `https://pokeapi.co/api/v2/pokemon/${pokeId}`
+        );
+        const data = await response.json();
+        setPokeDados(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     handleDataPokemon();
-    console.log(pokeDados);
   }, [pokeId]);
 
   return (
@@ -39,12 +48,12 @@ export default function App() {
       <div className="bg-[#797979] w-[350px] h-[600px] rounded-tl-[101px] relative border-[5px] border-[#232323] shadow-md shadow-black">
         <div className="w-[20px] h-[78px] absolute right-0 top-13 flex flex-col justify-between">
           {/* PISCA-PISCA */}
-          <div className="bg-[#232323] w-full h-4.5 rounded-tl-xl rounded-bl-xl border-[3px] border-r-0 border-[#232323]">
+          <div className="bg-[#000] w-full h-4.5 rounded-tl-xl rounded-bl-xl border-[3px] border-r-0 border-[#232323]">
             <div
               className={`${
                 ligar === 1
                   ? "bg-[#33ff00] w-full h-full rounded-tl-xl rounded-bl-xl animate-pulse delay-75"
-                  : "bg-[#232323]"
+                  : "bg-[#000]"
               }`}
             ></div>
           </div>
@@ -53,7 +62,7 @@ export default function App() {
               className={`${
                 ligar === 1
                   ? "bg-[#fbff00] w-full h-full rounded-tl-xl rounded-bl-xl animate-pulse delay-150"
-                  : "bg-[#232323]"
+                  : "bg-[#000]"
               }`}
             ></div>
           </div>
@@ -72,66 +81,73 @@ export default function App() {
           <div
             className={`bg-[#232323] w-[273px] h-[232px] rounded-2xl overflow-hidden border-[5px] border-[#232323] mb-30 relative flex justify-center items-center `}
           >
-            <div
-              className={`absolute bg-red-950 w-10 h-6 top-7 right-14 z-10 rounded-full border-[#232323] border-[3px] flex justify-center items-center ${
-                ligar === 1 && pokeDados ? "opacit-[100]" : "opacity-0"
-              }`}
-            >
-              {ligar === 1 && pokeDados && (
-                <div className="text-[9px] text-white flex justify-center items-center">
-                  {pokeDados.id}
-                </div>
-              )}
-            </div>
-            <div
-              className={`bg-red-800 w-[120px] h-[30px] absolute top-2 border-[#232323] border-[3px] flex justify-center items-center capitalize text-white text-[10px] rounded-tl-2xl rounded-br-2xl ${
-                ligar === 1 && pokeDados ? "opacit-[100]" : "opacity-0"
-              }`}
-            >
-              {pokeDados ? pokeDados.name : ""}
-            </div>
-            {pokeDados ? (
-              <div className="h-22 absolute flex justify-center items-center overflow-hidden">
-                <img
-                  className={` transition-opacity  duration-1000 ease-in-out ${
-                    ligar === 1 ? "opacit-[100]" : "opacity-0"
-                  } h-full object-contain`}
-                  src={
-                    pokeDados.sprites.versions["generation-v"]["black-white"]
-                      .animated.front_default
-                  }
-                  alt={pokeDados.name}
-                />
-              </div>
+            {loading ? (
+              <Loading />
             ) : (
-              ""
-            )}
-
-            <div
-              className={`bg-red-800  border-[3px] border-[#232323] absolute w-50 h-14 bottom-2 p-1 rounded-tl-2xl rounded-br-2xl text-white ${
-                ligar === 1 && pokeDados ? "opacit-[100]" : "opacity-0"
-              }`}
-            >
-              {ligar === 1 && pokeDados && (
-                <div className="text-[6px] capitalize flex flex-col justify-center items-center gap-3">
-                  <h3 className="font-bold bg-red-950 w-20 h-3 flex justify-center items-center rounded-2xl">
-                    Habilidades
-                  </h3>
-                  <ul className="flex justify-center items-center gap-[5px]">
-                    {pokeDados.abilities.map((hab, i) => (
-                      <li key={i}>{"• " + hab.ability.name}</li>
-                    ))}
-                  </ul>
+              <>
+                <div
+                  className={`absolute bg-white w-10 h-6 top-7 right-14 z-10 rounded-full border-[#232323] border-[3px] flex justify-center items-center ${
+                    ligar === 1 && pokeDados ? "opacit-[100]" : "opacity-0"
+                  }`}
+                >
+                  {ligar === 1 && pokeDados && (
+                    <div className="text-[9px] text-black flex justify-center items-center">
+                      {pokeDados.id}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <img
-              className={`w-full h-full object-cover transition-opacity  duration-500 ease-in-out ${
-                ligar === 1 ? "opacit-[100]" : "opacity-0"
-              }`}
-              src={background}
-              alt="background"
-            />
+                <div
+                  className={`bg-white w-[120px] h-[30px] absolute top-2 border-[#232323] border-[3px] flex justify-center items-center capitalize text-black text-[10px] rounded-tl-2xl rounded-br-2xl ${
+                    ligar === 1 && pokeDados ? "opacit-[100]" : "opacity-0"
+                  }`}
+                >
+                  {pokeDados ? pokeDados.name : ""}
+                </div>
+                {pokeDados ? (
+                  <div className="h-22 absolute flex justify-center items-center overflow-hidden">
+                    <img
+                      className={` transition-opacity  duration-1000 ease-in-out ${
+                        ligar === 1 ? "opacit-[100]" : "opacity-0"
+                      } h-full object-contain`}
+                      src={
+                        pokeDados.sprites.versions["generation-v"][
+                          "black-white"
+                        ].animated.front_default
+                      }
+                      alt={pokeDados.name}
+                    />
+                  </div>
+                ) : (
+                  ""
+                )}
+
+                <div
+                  className={`bg-white  border-[3px] border-[#232323] absolute w-50 h-14 bottom-2 p-1 rounded-tl-2xl rounded-br-2xl text-black ${
+                    ligar === 1 && pokeDados ? "opacit-[100]" : "opacity-0"
+                  }`}
+                >
+                  {ligar === 1 && pokeDados && (
+                    <div className=" capitalize flex flex-col justify-center items-center gap-2">
+                      <p className="font-bold bg-gray-300 w-30 h-4 flex justify-center items-center rounded-2xl text-[8px]">
+                        Habilidades
+                      </p>
+                      <ul className="flex justify-center items-center gap-[5px] text-[6px]">
+                        {pokeDados.abilities.map((hab, i) => (
+                          <li key={i}>{"• " + hab.ability.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <img
+                  className={`w-full h-full object-cover transition-opacity  duration-500 ease-in-out ${
+                    ligar === 1 ? "opacit-[100]" : "opacity-0"
+                  }`}
+                  src={background}
+                  alt="background"
+                />
+              </>
+            )}
           </div>
           <div className="w-[273px] flex justify-between items-start absolute bottom-40 z-10">
             {/* BOTÕES */}
